@@ -3,11 +3,13 @@
         <div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="bg-white rounded-xl shadow-sm p-6">
                 <!-- Timer -->
-                <div class="text-center mb-8" x-data="countdown()" x-init="startTimer('{{ $order->expires_at->toIso8601String() }}')">
+                @if($order->expires_at)
+                <div class="text-center mb-8" x-data="countdownTimer()" x-init="init('{{ $order->expires_at->toIso8601String() }}')">
                     <p class="text-gray-600 mb-2">Selesaikan pembayaran dalam</p>
-                    <div class="text-3xl font-bold text-red-600" x-text="timeLeft">15:00</div>
+                    <div class="text-3xl font-bold" :class="expired ? 'text-red-600' : 'text-red-600'" x-text="display">--:--</div>
                     <p class="text-sm text-gray-500 mt-2">Order akan otomatis dibatalkan jika tidak dibayar</p>
                 </div>
+                @endif
 
                 <!-- Order Details -->
                 <div class="border-t border-b py-6 mb-6">
@@ -15,7 +17,8 @@
 
                     <div class="flex gap-4 mb-4">
                         <img src="{{ $order->event->poster_url }}" alt="{{ $order->event->title }}"
-                             class="w-16 h-20 object-cover rounded-lg">
+                             class="w-16 h-20 object-cover rounded-lg"
+                             onerror="this.src='https://placehold.co/64x80?text=No+Image'">
                         <div>
                             <h3 class="font-semibold text-gray-900">{{ $order->event->title }}</h3>
                             <p class="text-sm text-gray-600">{{ $order->event->formatted_date }}</p>
@@ -71,43 +74,48 @@
 
                 <!-- Cancel -->
                 <div class="text-center mt-6">
-                    <a href="{{ route('orders.show', $order) }}" class="text-gray-600 hover:text-gray-800 text-sm">
-                        Batalkan & Lihat Detail Order
+                    <a href="{{ route('events.show', $order->event) }}" class="text-gray-600 hover:text-gray-800 text-sm">
+                        Batalkan & Kembali ke Event
                     </a>
                 </div>
             </div>
         </div>
     </div>
 
-    @push('scripts')
     <script>
-        function countdown() {
+        function countdownTimer() {
             return {
-                timeLeft: '15:00',
+                display: '--:--',
                 expired: false,
-                startTimer(expiresAt) {
+                interval: null,
+                init(expiresAt) {
                     const endTime = new Date(expiresAt).getTime();
 
-                    const timer = setInterval(() => {
-                        const now = new Date().getTime();
-                        const distance = endTime - now;
+                    this.updateDisplay(endTime);
 
-                        if (distance < 0) {
-                            clearInterval(timer);
-                            this.timeLeft = '00:00';
-                            this.expired = true;
-                            window.location.href = '{{ route('checkout.expired', $order) }}';
-                            return;
-                        }
-
-                        const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-                        const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-
-                        this.timeLeft = String(minutes).padStart(2, '0') + ':' + String(seconds).padStart(2, '0');
+                    this.interval = setInterval(() => {
+                        this.updateDisplay(endTime);
                     }, 1000);
+                },
+                updateDisplay(endTime) {
+                    const now = new Date().getTime();
+                    const distance = endTime - now;
+
+                    if (distance < 0) {
+                        clearInterval(this.interval);
+                        this.display = '00:00';
+                        this.expired = true;
+                        // Redirect ke expired page
+                        window.location.href = '{{ route("checkout.expired", $order) }}';
+                        return;
+                    }
+
+                    const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                    const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+                    this.display = String(minutes).padStart(2, '0') + ':' + String(seconds).padStart(2, '0');
                 }
             }
         }
     </script>
-    @endpush
 </x-app-layout>

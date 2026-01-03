@@ -10,7 +10,7 @@
                 </div>
 
                 <h1 class="text-2xl font-bold text-gray-900 mb-2">Pembayaran Berhasil!</h1>
-                <p class="text-gray-600 mb-6">Tiket kamu sudah dikirim ke email {{ $order->attendee_email }}</p>
+                <p class="text-gray-600 mb-6">Tiket kamu sudah dikirim ke email {{ $order->customer_email }}</p>
 
                 <!-- Order Info -->
                 <div class="bg-gray-50 rounded-lg p-4 mb-6 text-left">
@@ -36,9 +36,9 @@
                                 <div class="flex items-center justify-between bg-white rounded p-3">
                                     <div>
                                         <p class="font-mono text-sm font-semibold">{{ $ticket->code }}</p>
-                                        <p class="text-xs text-gray-500">{{ $ticket->orderItem->ticket_name }}</p>
+                                        <p class="text-xs text-gray-500">{{ $ticket->orderItem->ticket_name ?? 'Ticket' }}</p>
                                     </div>
-                                    <a href="{{ route('tickets.show', $ticket) }}" class="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                                    <a href="{{ route('tickets.show', $ticket->code) }}" class="text-blue-600 hover:text-blue-800 text-sm font-medium">
                                         Lihat →
                                     </a>
                                 </div>

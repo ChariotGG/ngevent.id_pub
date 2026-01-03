@@ -12,11 +12,11 @@ return Application::configure(basePath: dirname(__DIR__))
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
         then: function () {
-            // Admin routes (sudah ada prefix di file)
+            // Admin routes
             Route::middleware('web')
                 ->group(base_path('routes/admin.php'));
 
-            // Organizer routes (sudah ada prefix di file)
+            // Organizer routes
             Route::middleware('web')
                 ->group(base_path('routes/organizer.php'));
 
@@ -25,7 +25,8 @@ return Application::configure(basePath: dirname(__DIR__))
                 ->group(base_path('routes/auth.php'));
 
             // Webhook routes (tanpa CSRF)
-            Route::group([], base_path('routes/webhook.php'));
+            Route::middleware('web')
+                ->group(base_path('routes/webhook.php'));
         },
     )
     ->withMiddleware(function (Middleware $middleware) {

@@ -7,14 +7,15 @@ use App\Models\Event;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\TicketVariant;
-use App\Models\Voucher;
+use App\Enums\OrderStatus;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class CheckoutController extends Controller
 {
-    public function index(Event $event): View
+    public function index(Event $event): View|RedirectResponse
     {
         if (!$event->isPublished()) {
             abort(404);
@@ -32,19 +33,18 @@ class CheckoutController extends Controller
         return view('pages.checkout.index', compact('event'));
     }
 
-    public function store(Request $request, Event $event)
+    public function store(Request $request, Event $event): RedirectResponse
     {
         $request->validate([
             'tickets' => 'required|array|min:1',
             'tickets.*.variant_id' => 'required|exists:ticket_variants,id',
             'tickets.*.quantity' => 'required|integer|min:0|max:10',
             'voucher_code' => 'nullable|string|max:50',
-            'attendee_name' => 'required|string|max:255',
-            'attendee_email' => 'required|email|max:255',
-            'attendee_phone' => 'required|string|max:20',
+            'customer_name' => 'required|string|max:255',
+            'customer_email' => 'required|email|max:255',
+            'customer_phone' => 'required|string|max:20',
         ]);
 
-        // Filter tickets with quantity > 0
         $selectedTickets = collect($request->tickets)->filter(fn($t) => $t['quantity'] > 0);
 
         if ($selectedTickets->isEmpty()) {
@@ -54,25 +54,21 @@ class CheckoutController extends Controller
         try {
             DB::beginTransaction();
 
-            // Check availability and reserve stock
             $orderItems = [];
             $subtotal = 0;
 
             foreach ($selectedTickets as $ticketData) {
                 $variant = TicketVariant::with('ticket')->findOrFail($ticketData['variant_id']);
 
-                // Check if variant belongs to this event
                 if ($variant->ticket->event_id !== $event->id) {
                     throw new \Exception('Tiket tidak valid untuk event ini');
                 }
 
-                // Check availability
                 $available = $variant->stock - $variant->sold_count - $variant->reserved_count;
                 if ($ticketData['quantity'] > $available) {
                     throw new \Exception("Tiket {$variant->ticket->name} tidak cukup tersedia");
                 }
 
-                // Reserve stock
                 $variant->increment('reserved_count', $ticketData['quantity']);
 
                 $itemSubtotal = $variant->price * $ticketData['quantity'];
@@ -86,33 +82,29 @@ class CheckoutController extends Controller
                 ];
             }
 
-            // Calculate fees
             $platformFee = 0;
             $paymentFee = (int) ceil($subtotal * 0.025);
             $discount = 0;
             $voucherId = null;
-
             $total = $subtotal + $paymentFee - $discount;
 
-            // Create order
             $order = Order::create([
                 'user_id' => auth()->id(),
                 'event_id' => $event->id,
                 'voucher_id' => $voucherId,
                 'order_number' => $this->generateOrderNumber(),
-                'status' => 'pending',
+                'status' => OrderStatus::PENDING,
                 'subtotal' => $subtotal,
                 'discount' => $discount,
                 'platform_fee' => $platformFee,
                 'payment_fee' => $paymentFee,
                 'total' => $total,
-                'attendee_name' => $request->attendee_name,
-                'attendee_email' => $request->attendee_email,
-                'attendee_phone' => $request->attendee_phone,
+                'customer_name' => $request->customer_name,
+                'customer_email' => $request->customer_email,
+                'customer_phone' => $request->customer_phone,
                 'expires_at' => now()->addMinutes(15),
             ]);
 
-            // Create order items
             foreach ($orderItems as $item) {
                 OrderItem::create([
                     'order_id' => $order->id,
@@ -121,7 +113,7 @@ class CheckoutController extends Controller
                     'ticket_name' => $item['variant']->ticket->name,
                     'variant_name' => $item['variant']->name,
                     'quantity' => $item['quantity'],
-                    'price' => $item['price'],
+                    'unit_price' => $item['price'],
                     'subtotal' => $item['subtotal'],
                 ]);
             }
@@ -136,17 +128,20 @@ class CheckoutController extends Controller
         }
     }
 
-    public function payment(Order $order): View
+    public function payment(Order $order): View|RedirectResponse
     {
         if ($order->user_id !== auth()->id()) {
             abort(403);
         }
 
-        if ($order->status !== 'pending') {
+        $status = $order->status instanceof OrderStatus ? $order->status->value : $order->status;
+
+        if ($status !== 'pending') {
             return redirect()->route('orders.show', $order);
         }
 
-        if ($order->isExpired()) {
+        // Cek expired
+        if ($order->expires_at && $order->expires_at->isPast()) {
             return redirect()->route('checkout.expired', $order);
         }
 
@@ -155,32 +150,33 @@ class CheckoutController extends Controller
         return view('pages.checkout.payment', compact('order'));
     }
 
-    public function processPayment(Request $request, Order $order)
+    public function processPayment(Request $request, Order $order): RedirectResponse
     {
         if ($order->user_id !== auth()->id()) {
             abort(403);
         }
 
-        if ($order->status !== 'pending') {
+        $status = $order->status instanceof OrderStatus ? $order->status->value : $order->status;
+
+        if ($status !== 'pending') {
             return redirect()->route('orders.show', $order);
         }
 
         try {
             DB::beginTransaction();
 
-            // Update order status
             $order->update([
-                'status' => 'paid',
+                'status' => OrderStatus::PAID,
                 'paid_at' => now(),
             ]);
 
-            // Convert reserved to sold
             foreach ($order->items as $item) {
-                $item->ticketVariant->decrement('reserved_count', $item->quantity);
-                $item->ticketVariant->increment('sold_count', $item->quantity);
+                if ($item->ticketVariant) {
+                    $item->ticketVariant->decrement('reserved_count', $item->quantity);
+                    $item->ticketVariant->increment('sold_count', $item->quantity);
+                }
             }
 
-            // Generate issued tickets
             $this->generateIssuedTickets($order);
 
             DB::commit();
@@ -194,18 +190,18 @@ class CheckoutController extends Controller
         }
     }
 
-    public function success(Order $order): View
+    public function success(Order $order): View|RedirectResponse
     {
         if ($order->user_id !== auth()->id()) {
             abort(403);
         }
 
-        $order->load(['event', 'items', 'issuedTickets']);
+        $order->load(['event', 'items', 'issuedTickets.orderItem']);
 
         return view('pages.checkout.success', compact('order'));
     }
 
-    public function failed(Order $order): View
+    public function failed(Order $order): View|RedirectResponse
     {
         if ($order->user_id !== auth()->id()) {
             abort(403);
@@ -216,16 +212,17 @@ class CheckoutController extends Controller
         return view('pages.checkout.failed', compact('order'));
     }
 
-    public function expired(Order $order): View
+    public function expired(Order $order): View|RedirectResponse
     {
         if ($order->user_id !== auth()->id()) {
             abort(403);
         }
 
-        // Release reserved tickets if not already done
-        if ($order->status === 'pending') {
+        $status = $order->status instanceof OrderStatus ? $order->status->value : $order->status;
+
+        if ($status === 'pending') {
             $this->releaseReservedTickets($order);
-            $order->update(['status' => 'expired']);
+            $order->update(['status' => OrderStatus::EXPIRED]);
         }
 
         $order->load(['event']);
@@ -250,9 +247,9 @@ class CheckoutController extends Controller
                     'user_id' => $order->user_id,
                     'order_item_id' => $item->id,
                     'code' => $this->generateTicketCode(),
-                    'attendee_name' => $order->attendee_name,
-                    'attendee_email' => $order->attendee_email,
-                    'attendee_phone' => $order->attendee_phone,
+                    'attendee_name' => $order->customer_name,
+                    'attendee_email' => $order->customer_email,
+                    'attendee_phone' => $order->customer_phone,
                     'status' => 'active',
                 ]);
             }
@@ -271,7 +268,9 @@ class CheckoutController extends Controller
     protected function releaseReservedTickets(Order $order): void
     {
         foreach ($order->items as $item) {
-            $item->ticketVariant->decrement('reserved_count', $item->quantity);
+            if ($item->ticketVariant) {
+                $item->ticketVariant->decrement('reserved_count', $item->quantity);
+            }
         }
     }
 }

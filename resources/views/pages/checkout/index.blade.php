@@ -1,5 +1,5 @@
 <x-app-layout>
-    <div class="bg-gray-50 min-h-screen py-8">
+    <div class="bg-gray-50 min-h-screen py-8" x-data="checkoutForm()">
         <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
             <!-- Breadcrumb -->
             <nav class="text-sm mb-6">
@@ -12,7 +12,7 @@
                     <div class="bg-white rounded-xl shadow-sm p-6">
                         <h1 class="text-2xl font-bold text-gray-900 mb-6">Pilih Tiket</h1>
 
-                        <form action="{{ route('checkout.store', $event) }}" method="POST" id="checkout-form" x-data="checkoutForm()">
+                        <form action="{{ route('checkout.store', $event) }}" method="POST" id="checkout-form">
                             @csrf
 
                             @if(session('error'))
@@ -69,7 +69,7 @@
                                                                    readonly>
                                                             <input type="hidden" name="tickets[{{ $variant->id }}][variant_id]" value="{{ $variant->id }}">
                                                             <button type="button"
-                                                                    @click="increaseQty({{ $variant->id }}, {{ min($available, 10) }}, {{ $variant->price }})"
+                                                                    @click="increaseQty({{ $variant->id }}, {{ min($available, 10) }})"
                                                                     class="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-100">
                                                                 +
                                                             </button>
@@ -84,36 +84,36 @@
                                 @endforeach
                             </div>
 
-                            <!-- Attendee Info -->
+                            <!-- Customer Info -->
                             <div class="border-t pt-6">
                                 <h2 class="text-lg font-semibold text-gray-900 mb-4">Data Pemesan</h2>
 
                                 <div class="space-y-4">
                                     <div>
                                         <label class="block text-sm font-medium text-gray-700 mb-1">Nama Lengkap</label>
-                                        <input type="text" name="attendee_name" required
-                                               value="{{ old('attendee_name', auth()->user()->name) }}"
+                                        <input type="text" name="customer_name" required
+                                               value="{{ old('customer_name', auth()->user()->name) }}"
                                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                                        @error('attendee_name')
+                                        @error('customer_name')
                                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                                         @enderror
                                     </div>
                                     <div>
                                         <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                                        <input type="email" name="attendee_email" required
-                                               value="{{ old('attendee_email', auth()->user()->email) }}"
+                                        <input type="email" name="customer_email" required
+                                               value="{{ old('customer_email', auth()->user()->email) }}"
                                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                                        @error('attendee_email')
+                                        @error('customer_email')
                                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                                         @enderror
                                     </div>
                                     <div>
                                         <label class="block text-sm font-medium text-gray-700 mb-1">No. HP/WhatsApp</label>
-                                        <input type="tel" name="attendee_phone" required
-                                               value="{{ old('attendee_phone', auth()->user()->phone) }}"
+                                        <input type="tel" name="customer_phone" required
+                                               value="{{ old('customer_phone', auth()->user()->phone) }}"
                                                placeholder="08xxxxxxxxxx"
                                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                                        @error('attendee_phone')
+                                        @error('customer_phone')
                                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                                         @enderror
                                     </div>
@@ -144,13 +144,14 @@
                     </div>
                 </div>
 
-                <!-- Right: Order Summary -->
+                <!-- Right: Order Summary (TANPA x-data sendiri) -->
                 <div class="lg:col-span-1">
-                    <div class="bg-white rounded-xl shadow-sm p-6 sticky top-24" x-data="checkoutForm()">
+                    <div class="bg-white rounded-xl shadow-sm p-6 sticky top-24">
                         <!-- Event Info -->
                         <div class="flex gap-4 mb-6 pb-6 border-b">
                             <img src="{{ $event->poster_url }}" alt="{{ $event->title }}"
-                                 class="w-20 h-28 object-cover rounded-lg">
+                                 class="w-20 h-28 object-cover rounded-lg"
+                                 onerror="this.src='https://placehold.co/80x112?text=No+Image'">
                             <div>
                                 <h3 class="font-semibold text-gray-900">{{ $event->title }}</h3>
                                 <p class="text-sm text-gray-600 mt-1">{{ $event->formatted_date }}</p>
@@ -234,7 +235,7 @@
                 get total() {
                     return this.subtotal + this.serviceFee;
                 },
-                increaseQty(id, max, price) {
+                increaseQty(id, max) {
                     if (this.quantities[id] < max) {
                         this.quantities[id]++;
                     }

@@ -24,7 +24,7 @@
                 <div class="flex justify-between h-16">
                     <!-- Logo -->
                     <div class="flex items-center">
-                        <a href="{{ route('home') }}" class="flex items-center space-x-2">
+                        <a href="/" class="flex items-center space-x-2">
                             <span class="text-2xl font-bold text-blue-600">ngevent</span>
                             <span class="text-sm text-gray-500">.id</span>
                         </a>
@@ -58,6 +58,16 @@
                                     <a href="{{ route('profile.index') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                                         Profil
                                     </a>
+                                    @if(auth()->user()->isOrganizer())
+                                        <a href="{{ route('organizer.dashboard') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                            Dashboard Organizer
+                                        </a>
+                                    @endif
+                                    @if(auth()->user()->isAdmin())
+                                        <a href="{{ route('admin.dashboard') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                            Dashboard Admin
+                                        </a>
+                                    @endif
                                     <hr class="my-1">
                                     <form method="POST" action="{{ route('logout') }}">
                                         @csrf
@@ -75,6 +85,32 @@
                                 Daftar
                             </a>
                         @endauth
+                    </div>
+
+                    <!-- Mobile menu button -->
+                    <div class="md:hidden flex items-center">
+                        <div x-data="{ mobileOpen: false }">
+                            <button @click="mobileOpen = !mobileOpen" class="text-gray-600">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                                </svg>
+                            </button>
+                            <div x-show="mobileOpen" @click.away="mobileOpen = false" class="absolute top-16 left-0 right-0 bg-white shadow-lg p-4 z-50">
+                                <a href="{{ route('events.index') }}" class="block py-2 text-gray-600">Events</a>
+                                @auth
+                                    <a href="{{ route('tickets.index') }}" class="block py-2 text-gray-600">Tiket Saya</a>
+                                    <a href="{{ route('orders.index') }}" class="block py-2 text-gray-600">Pesanan Saya</a>
+                                    <a href="{{ route('profile.index') }}" class="block py-2 text-gray-600">Profil</a>
+                                    <form method="POST" action="{{ route('logout') }}" class="mt-2">
+                                        @csrf
+                                        <button type="submit" class="text-red-600">Keluar</button>
+                                    </form>
+                                @else
+                                    <a href="{{ route('login') }}" class="block py-2 text-gray-600">Masuk</a>
+                                    <a href="{{ route('register') }}" class="block py-2 text-blue-600">Daftar</a>
+                                @endauth
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -111,9 +147,6 @@
             </div>
         </footer>
     </div>
-
-    <!-- Alpine.js -->
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
     @stack('scripts')
 </body>
