@@ -616,3 +616,6 @@ Proprietary - ngevent.id © 2024
 - Backend: Senior Laravel Developer
 - Frontend: UI/UX Designer + Frontend Developer
 - DevOps: Infrastructure Engineer
+
+
+Ben ketok pronuktif wok
