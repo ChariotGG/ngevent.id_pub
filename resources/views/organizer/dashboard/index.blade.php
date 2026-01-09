@@ -2,9 +2,9 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <h1 class="text-3xl font-bold text-gray-900 mb-8">Organizer Dashboard</h1>
 
-        <div class="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-8">
-            <h2 class="text-lg font-semibold text-blue-800">Selamat datang, {{ auth()->user()->organizer->name ?? auth()->user()->name }}!</h2>
-            <p class="mt-2 text-blue-700">Kelola event dan tiket kamu dari sini.</p>
+        <div class="bg-pink-50 border border-pink-200 rounded-lg p-6 mb-8">
+            <h2 class="text-lg font-semibold text-pink-800">Selamat datang, {{ auth()->user()->organizer->name ?? auth()->user()->name }}!</h2>
+            <p class="mt-2 text-pink-700">Kelola event dan tiket kamu dari sini.</p>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
@@ -22,7 +22,7 @@
             </div>
             <div class="bg-white rounded-xl shadow p-6">
                 <h3 class="text-sm font-medium text-gray-500">Tiket Terjual</h3>
-                <p class="text-3xl font-bold text-blue-600 mt-2">0</p>
+                <p class="text-3xl font-bold text-pink-600 mt-2">0</p>
             </div>
             <div class="bg-white rounded-xl shadow p-6">
                 <h3 class="text-sm font-medium text-gray-500">Pendapatan</h3>
@@ -33,7 +33,7 @@
         <div class="bg-white rounded-xl shadow p-6">
             <div class="flex items-center justify-between mb-6">
                 <h2 class="text-xl font-bold text-gray-900">Events Saya</h2>
-                <a href="#" class="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition">
+                <a href="#" class="bg-pink-600 text-[#FF8FC7] px-4 py-2 rounded-lg font-medium hover:bg-pink-700 transition">
                     + Buat Event Baru
                 </a>
             </div>

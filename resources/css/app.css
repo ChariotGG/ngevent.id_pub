@@ -2,61 +2,105 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Custom styles */
+/* ================================
+   NGEVENT.ID DESIGN SYSTEM
+   Theme: Black & Pink (#FF8FC7)
+   ================================ */
+
 @layer components {
+
+    /* ---------- BUTTON ---------- */
     .btn {
-        @apply inline-flex items-center justify-center px-4 py-2 font-medium rounded-lg transition focus:outline-none focus:ring-2 focus:ring-offset-2;
+        @apply inline-flex items-center justify-center px-4 py-2 font-medium rounded-lg
+               transition focus:outline-none focus:ring-2 focus:ring-offset-2
+               focus:ring-offset-black;
     }
 
     .btn-primary {
-        @apply bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500;
+        @apply bg-[#FF8FC7] text-black
+               hover:bg-pink-400
+               focus:ring-[#FF8FC7];
     }
 
     .btn-secondary {
-        @apply bg-gray-200 text-gray-900 hover:bg-gray-300 focus:ring-gray-500;
+        @apply bg-gray-800 text-gray-200
+               hover:bg-gray-700
+               focus:ring-gray-500;
     }
 
     .btn-outline {
-        @apply border-2 border-blue-600 text-blue-600 hover:bg-blue-50 focus:ring-blue-500;
+        @apply border-2 border-[#FF8FC7] text-[#FF8FC7]
+               hover:bg-[#FF8FC7]/10
+               focus:ring-[#FF8FC7];
     }
 
     .btn-danger {
-        @apply bg-red-600 text-white hover:bg-red-700 focus:ring-red-500;
+        @apply bg-red-600 text-white
+               hover:bg-red-700
+               focus:ring-red-500;
     }
 
+    /* ---------- INPUT ---------- */
     .input {
-        @apply w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition;
+        @apply w-full px-4 py-2 rounded-lg
+               bg-black text-[#FF8FC7]
+               border border-gray-700
+               placeholder-gray-500
+               focus:ring-2 focus:ring-[#FF8FC7]
+               focus:border-[#FF8FC7]
+               transition;
     }
 
     .label {
-        @apply block text-sm font-medium text-gray-700 mb-1;
+        @apply block text-sm font-medium text-gray-300 mb-1;
     }
 
+    /* ---------- CARD ---------- */
     .card {
-        @apply bg-white rounded-xl shadow-sm;
+        @apply bg-gray-900 rounded-xl shadow-lg border border-gray-800;
     }
 
+    /* ---------- BADGE ---------- */
     .badge {
-        @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+        @apply inline-flex items-center px-2.5 py-0.5 rounded-full
+               text-xs font-medium;
     }
 
-    .badge-blue {
-        @apply bg-blue-100 text-blue-800;
+    .badge-primary {
+        @apply bg-[#FF8FC7]/20 text-[#FF8FC7];
     }
 
-    .badge-green {
-        @apply bg-green-100 text-green-800;
+    .badge-success {
+        @apply bg-green-500/20 text-green-400;
     }
 
-    .badge-yellow {
-        @apply bg-yellow-100 text-yellow-800;
+    .badge-warning {
+        @apply bg-yellow-500/20 text-yellow-400;
     }
 
-    .badge-red {
-        @apply bg-red-100 text-red-800;
+    .badge-danger {
+        @apply bg-red-500/20 text-red-400;
     }
 
     .badge-gray {
-        @apply bg-gray-100 text-gray-800;
+        @apply bg-gray-700 text-gray-300;
+    }
+
+    /* ---------- LINKS ---------- */
+    .link {
+        @apply text-[#FF8FC7] hover:underline;
+    }
+
+    /* ---------- UTILITIES ---------- */
+    .bg-primary {
+        @apply bg-[#FF8FC7];
+    }
+
+    .text-primary {
+        @apply text-[#FF8FC7];
+    }
+
+    .ring-primary {
+        @apply focus:ring-[#FF8FC7];
     }
 }

@@ -2,9 +2,9 @@
     <div class="min-h-[80vh] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
         <div class="max-w-md w-full space-y-8">
             <div class="text-center">
-                <h2 class="text-3xl font-bold text-gray-900">Masuk ke Akun</h2>
+                <h2 class="text-3xl font-bold text-white">Masuk ke Akun</h2>
                 <p class="mt-2 text-gray-600">Belum punya akun?
-                    <a href="{{ route('register') }}" class="text-blue-600 hover:text-blue-800 font-medium">Daftar sekarang</a>
+                    <a href="{{ route('register') }}" class="text-pink-600 hover:text-pink-800 font-medium">Daftar sekarang</a>
                 </p>
             </div>
 
@@ -15,7 +15,7 @@
                 <div>
                     <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
                     <input id="email" name="email" type="email" value="{{ old('email') }}" required autofocus
-                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 @error('email') border-red-500 @enderror"
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500 @error('email') border-red-500 @enderror"
                            placeholder="nama@email.com">
                     @error('email')
                         <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
@@ -26,7 +26,7 @@
                 <div>
                     <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
                     <input id="password" name="password" type="password" required
-                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 @error('password') border-red-500 @enderror"
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500 @error('password') border-red-500 @enderror"
                            placeholder="••••••••">
                     @error('password')
                         <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
@@ -36,16 +36,16 @@
                 <!-- Remember Me & Forgot Password -->
                 <div class="flex items-center justify-between">
                     <label class="flex items-center">
-                        <input type="checkbox" name="remember" class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                        <input type="checkbox" name="remember" class="h-4 w-4 text-pink-600 border-gray-300 rounded focus:ring-pink-500">
                         <span class="ml-2 text-sm text-gray-600">Ingat saya</span>
                     </label>
-                    <a href="{{ route('password.request') }}" class="text-sm text-blue-600 hover:text-blue-800">
+                    <a href="{{ route('password.request') }}" class="text-sm text-pink-600 hover:text-pink-800">
                         Lupa password?
                     </a>
                 </div>
 
                 <!-- Submit Button -->
-                <button type="submit" class="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-blue-700 focus:ring-4 focus:ring-blue-200 transition">
+                <button type="submit" class="w-full bg-pink-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-pink-700 focus:ring-4 focus:ring-pink-200 transition">
                     Masuk
                 </button>
             </form>
@@ -63,7 +63,7 @@
             <!-- Register as Organizer -->
             <div class="text-center">
                 <p class="text-gray-600">Ingin jadi penyelenggara event?</p>
-                <a href="{{ route('register.organizer') }}" class="mt-2 inline-block text-blue-600 hover:text-blue-800 font-medium">
+                <a href="{{ route('register.organizer') }}" class="mt-2 inline-block text-pink-600 hover:text-pink-800 font-medium">
                     Daftar sebagai Organizer →
                 </a>
             </div>
