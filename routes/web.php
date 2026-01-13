@@ -3,46 +3,49 @@
 use App\Http\Controllers\User\HomeController;
 use App\Http\Controllers\User\EventController;
 use App\Http\Controllers\User\CheckoutController;
-use App\Http\Controllers\User\OrderController;
-use App\Http\Controllers\User\TicketController;
-use App\Http\Controllers\User\ProfileController;
 use Illuminate\Support\Facades\Route;
 
 // Public Routes
 Route::get('/', [HomeController::class, 'index'])->name('home');
 
-// Events
+// Events (Public)
 Route::get('/events', [EventController::class, 'index'])->name('events.index');
 Route::get('/events/category/{category:slug}', [EventController::class, 'category'])->name('events.category');
 Route::get('/events/{event:slug}', [EventController::class, 'show'])->name('events.show');
 
-// Organizer Profile (public)
+// Organizer Profile (Public)
 Route::get('/organizer/{organizer:slug}', [EventController::class, 'organizer'])->name('organizer.show');
 
-// Authenticated Routes
-Route::middleware(['auth'])->group(function () {
-    // Checkout
-    Route::get('/checkout/{event:slug}', [CheckoutController::class, 'index'])->name('checkout.index');
-    Route::post('/checkout/{event:slug}', [CheckoutController::class, 'store'])->name('checkout.store');
-    Route::get('/checkout/payment/{order}', [CheckoutController::class, 'payment'])->name('checkout.payment');
-    Route::post('/checkout/payment/{order}', [CheckoutController::class, 'processPayment'])->name('checkout.process');
-    Route::get('/checkout/success/{order}', [CheckoutController::class, 'success'])->name('checkout.success');
-    Route::get('/checkout/failed/{order}', [CheckoutController::class, 'failed'])->name('checkout.failed');
-    Route::get('/checkout/expired/{order}', [CheckoutController::class, 'expired'])->name('checkout.expired');
-
-    // Orders
-    Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
-    Route::get('/orders/{order}', [OrderController::class, 'show'])->name('orders.show');
-    Route::post('/orders/{order}/cancel', [OrderController::class, 'cancel'])->name('orders.cancel');
-
-    // Tickets
-    Route::get('/tickets', [TicketController::class, 'index'])->name('tickets.index');
-    Route::get('/tickets/{ticket:code}', [TicketController::class, 'show'])->name('tickets.show');
-    Route::get('/tickets/{ticket:code}/download', [TicketController::class, 'download'])->name('tickets.download');
-
-    // Profile
-    Route::get('/profile', [ProfileController::class, 'index'])->name('profile.index');
-    Route::get('/profile/edit', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password');
+// Checkout (GUEST ALLOWED - NO AUTH REQUIRED)
+Route::prefix('checkout')->name('checkout.')->group(function () {
+    Route::get('/{event:slug}', [CheckoutController::class, 'index'])->name('index');
+    Route::post('/{event:slug}', [CheckoutController::class, 'store'])->name('store');
+    Route::get('/payment/{order}', [CheckoutController::class, 'payment'])->name('payment');
+    Route::post('/payment/{order}', [CheckoutController::class, 'processPayment'])->name('process');
+    Route::get('/success/{order}', [CheckoutController::class, 'success'])->name('success');
+    Route::get('/failed/{order}', [CheckoutController::class, 'failed'])->name('failed');
+    Route::get('/expired/{order}', [CheckoutController::class, 'expired'])->name('expired');
 });
+
+// Order Lookup (Guest - via email verification)
+Route::get('/my-tickets', function () {
+    return view('pages.tickets.lookup');
+})->name('tickets.lookup');
+
+Route::post('/my-tickets/verify', function (\Illuminate\Http\Request $request) {
+    $request->validate([
+        'email' => 'required|email',
+        'order_number' => 'required|string',
+    ]);
+
+    $order = \App\Models\Order::where('order_number', $request->order_number)
+        ->where('customer_email', $request->email)
+        ->with(['event', 'issuedTickets'])
+        ->first();
+
+    if (!$order) {
+        return back()->withErrors(['email' => 'Order tidak ditemukan dengan email dan nomor order tersebut']);
+    }
+
+    return view('pages.tickets.show', compact('order'));
+})->name('tickets.verify');

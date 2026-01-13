@@ -127,6 +127,18 @@ return [
             'path' => storage_path('logs/laravel.log'),
         ],
 
+        'webhook' => [
+        'driver' => 'single',
+        'path' => storage_path('logs/webhook.log'),
+        'level' => env('LOG_LEVEL', 'debug'),
+        ],
+
+        'payment' => [
+            'driver' => 'single',
+            'path' => storage_path('logs/payment.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+        ],
+
     ],
 
 ];
