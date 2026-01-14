@@ -618,4 +618,4 @@ Proprietary - ngevent.id © 2024
 - DevOps: Infrastructure Engineer
 
 
-Ben ketok pronuktif wok part 3
+Ben ketok pronuktif wok part 4 + gareti
