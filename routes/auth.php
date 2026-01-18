@@ -25,7 +25,13 @@ Route::middleware('guest')->group(function () {
 Route::middleware('auth')->group(function () {
     Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
-    // Email Verification (for organizers)
+    // Email Verification Routes
+    // ← TAMBAHKAN: Halaman "Please verify your email"
+    Route::get('/email/verify', function () {
+        return view('auth.verify-email');
+    })->name('verification.notice');
+
+    // Route untuk verifikasi email (ketika user klik link di email)
     Route::get('/email/verify/{id}/{hash}', function (EmailVerificationRequest $request) {
         $request->fulfill();
 
@@ -33,14 +39,10 @@ Route::middleware('auth')->group(function () {
         $request->session()->regenerate();
 
         return redirect()->route('organizer.dashboard')
-            ->with('success', 'Email berhasil diverifikasi!');
+            ->with('success', 'Email berhasil diverifikasi! Selamat datang di ngevent.id 🎉');
     })->middleware(['signed'])->name('verification.verify');
 
-    Route::get('/email/verify/{id}/{hash}', function (EmailVerificationRequest $request) {
-        $request->fulfill();
-        return redirect()->route('organizer.dashboard')->with('success', 'Email berhasil diverifikasi!');
-    })->middleware(['signed'])->name('verification.verify');
-
+    // Route untuk resend verification email
     Route::post('/email/verification-notification', function (\Illuminate\Http\Request $request) {
         $request->user()->sendEmailVerificationNotification();
         return back()->with('success', 'Link verifikasi telah dikirim ke email Anda!');

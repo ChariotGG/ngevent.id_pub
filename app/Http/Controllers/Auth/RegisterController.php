@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Enums\UserRole;
+use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -32,6 +33,8 @@ class RegisterController extends Controller
             'role' => UserRole::USER,
         ]);
 
+        event(new Registered($user));
+
         Auth::login($user);
 
         return redirect('/');
@@ -51,6 +54,7 @@ class RegisterController extends Controller
             'organizer_name' => 'required|string|max:255',
         ]);
 
+        // Create user
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
@@ -58,12 +62,19 @@ class RegisterController extends Controller
             'role' => UserRole::ORGANIZER,
         ]);
 
+        // Create organizer profile
         $user->organizer()->create([
             'name' => $request->organizer_name,
         ]);
 
+        // Trigger email verification event
+        event(new Registered($user));
+
+        // Login user
         Auth::login($user);
 
-        return redirect()->route('organizer.dashboard');
+        // Redirect to verification notice page
+        return redirect()->route('verification.notice')
+            ->with('success', 'Akun berhasil dibuat! Silakan cek email kamu untuk verifikasi.');
     }
 }

@@ -1,6 +1,6 @@
 ======================================================================
 EXPORT FOLDER RESOURCES - NGEVENT.ID (LARAVEL)
-Export Date: 2026-01-12T13:56:08.845Z
+Export Date: 2026-01-18T09:25:36.668Z
 ======================================================================
 
 STRUKTUR LENGKAP FOLDER RESOURCES:
@@ -27,9 +27,11 @@ resources/
     │   └── placeholder.blade.php
     ├── auth/
     │   ├── forgot-password.blade.php
+    │   ├── guest-layout.blade.php
     │   ├── login.blade.php
     │   ├── register-organizer.blade.php
-    │   └── register.blade.php
+    │   ├── register.blade.php
+    │   └── verify-email.blade.php
     ├── components/
     │   ├── ui/ (kosong)
     │   └── event-card.blade.php
@@ -464,6 +466,47 @@ FILE: resources/views/auth/forgot-password.blade.php (43 lines)
 </x-app-layout>
 
 ======================================================================
+FILE: resources/views/auth/guest-layout.blade.php (38 lines)
+======================================================================
+<!DOCTYPE html>
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+
+    <title>{{ $title ?? config('app.name', 'ngevent.id') }}</title>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.bunny.net">
+    <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700&display=swap" rel="stylesheet" />
+
+    <!-- Scripts -->
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
+</head>
+<body class="font-sans antialiased bg-black text-white">
+    <div class="min-h-screen flex flex-col items-center justify-center py-12 px-4">
+        <!-- Logo -->
+        <div class="mb-8">
+            <a href="{{ route('home') }}">
+                <img src="{{ asset('image/ngevent.id_logo.png') }}" alt="ngevent.id" class="h-10">
+            </a>
+        </div>
+
+        <!-- Content -->
+        {{ $slot }}
+
+        <!-- Footer -->
+        <div class="mt-8 text-center">
+            <p class="text-xs text-gray-600">
+                &copy; {{ date('Y') }} ngevent.id. All rights reserved.
+            </p>
+        </div>
+    </div>
+</body>
+</html>
+
+======================================================================
 FILE: resources/views/auth/login.blade.php (73 lines)
 ======================================================================
 <x-app-layout>
@@ -725,6 +768,60 @@ FILE: resources/views/auth/register.blade.php (90 lines)
 </x-app-layout>
 
 ======================================================================
+FILE: resources/views/auth/verify-email.blade.php (51 lines)
+======================================================================
+<x-app-layout>
+    {{-- Auto redirect jika sudah verified --}}
+    @if(auth()->user()->hasVerifiedEmail())
+        <script>
+            window.location.href = "{{ route('organizer.dashboard') }}";
+        </script>
+    @endif
+
+    <div class="max-w-md mx-auto px-4 py-16">
+        <div class="bg-gray-900 border border-gray-800 rounded-lg p-8 text-center">
+            <div class="w-16 h-16 bg-blue-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg class="w-8 h-8 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                </svg>
+            </div>
+
+            <h1 class="text-2xl font-bold text-white mb-2">Verifikasi Email Anda</h1>
+            <p class="text-sm text-gray-400 mb-6">
+                Kami telah mengirimkan link verifikasi ke email <strong class="text-white">{{ auth()->user()->email }}</strong>.
+                Silakan cek inbox Anda dan klik link untuk verifikasi.
+            </p>
+
+            @if (session('success'))
+                <div class="mb-4 p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
+                    <p class="text-sm text-green-400">{{ session('success') }}</p>
+                </div>
+            @endif
+
+            <form method="POST" action="{{ route('verification.send') }}">
+                @csrf
+                <button type="submit" class="w-full px-4 py-2.5 border border-gray-700 text-gray-300 font-medium rounded-lg hover:bg-gray-800 transition">
+                    Kirim Ulang Email Verifikasi
+                </button>
+            </form>
+
+            <p class="text-xs text-gray-500 mt-4">
+                Tidak menerima email? Cek folder spam atau kirim ulang di atas.
+            </p>
+
+            <div class="mt-6 pt-6 border-t border-gray-800">
+                <form method="POST" action="{{ route('logout') }}">
+                    @csrf
+                    <button type="submit" class="text-sm text-gray-400 hover:text-white transition">
+                        Logout
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</x-app-layout>
+
+======================================================================
 FILE: resources/views/components/event-card.blade.php (54 lines)
 ======================================================================
 @props(['event'])
@@ -782,7 +879,7 @@ FILE: resources/views/components/event-card.blade.php (54 lines)
 </article>
 
 ======================================================================
-FILE: resources/views/layouts/app.blade.php (212 lines)
+FILE: resources/views/layouts/app.blade.php (248 lines)
 ======================================================================
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="scroll-smooth">
@@ -807,143 +904,180 @@ FILE: resources/views/layouts/app.blade.php (212 lines)
 <div class="min-h-screen flex flex-col">
 
     <!-- Navigation -->
-<nav
-    x-data="{ scrolled: false }"
-    x-init="window.addEventListener('scroll', () => scrolled = window.scrollY > 10)"
-    :class="scrolled
-        ? 'bg-gray-950/80 backdrop-blur border-gray-900'
-        : 'bg-gray-950 border-gray-900'"
-    class="border-b sticky top-0 z-50 transition-all duration-300"
->
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between h-16">
+    <nav
+        x-data="{ scrolled: false }"
+        x-init="window.addEventListener('scroll', () => scrolled = window.scrollY > 10)"
+        :class="scrolled
+            ? 'bg-gray-950/80 backdrop-blur border-gray-900'
+            : 'bg-gray-950 border-gray-900'"
+        class="border-b sticky top-0 z-50 transition-all duration-300"
+    >
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
 
-            <!-- Logo -->
-            <div class="flex items-center">
-                <a href="{{ route('home') }}" class="flex items-center">
-                    <img
-                        src="{{ asset('image/ngevent.id_logo.png') }}"
-                        alt="ngevent.id"
-                        class="h-7 md:h-8 object-contain"
-                    >
-                </a>
-            </div>
+                <!-- Logo -->
+                <div class="flex items-center">
+                    <a href="{{ route('home') }}" class="flex items-center">
+                        <img
+                            src="{{ asset('image/ngevent.id_logo.png') }}"
+                            alt="ngevent.id"
+                            class="h-7 md:h-8 object-contain"
+                        >
+                    </a>
+                </div>
 
-            <!-- Desktop Navigation -->
-            <div class="hidden md:flex md:items-center md:space-x-6">
-                <a href="{{ route('events.index') }}"
-                   class="text-gray-300 hover:text-[#FF8FC7] transition">
-                    Events
-                </a>
-            </div>
-
-            <!-- Right Side -->
-            <div class="hidden md:flex md:items-center md:space-x-4">
-                @auth
-                    <a href="{{ route('tickets.index') }}"
+                <!-- Desktop Navigation -->
+                <div class="hidden md:flex md:items-center md:space-x-6">
+                    <a href="{{ route('events.index') }}"
                        class="text-gray-300 hover:text-[#FF8FC7] transition">
-                        Tiket Saya
+                        Events
                     </a>
 
-                    <div class="relative" x-data="{ open: false }">
-                        <button @click="open = !open"
-                                class="flex items-center space-x-2 text-gray-300 hover:text-[#FF8FC7] transition">
-                            <span>{{ auth()->user()->name }}</span>
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <a href="{{ route('tickets.lookup') }}"
+                       class="text-gray-300 hover:text-[#FF8FC7] transition">
+                        Cek Tiket
+                    </a>
+                </div>
+
+                <!-- Right Side -->
+                <div class="hidden md:flex md:items-center md:space-x-4">
+                    @auth
+                        {{-- Menu untuk Organizer --}}
+                        @if(auth()->user()->isOrganizer())
+                            <a href="{{ route('organizer.dashboard') }}"
+                               class="text-gray-300 hover:text-[#FF8FC7] transition">
+                                Dashboard
+                            </a>
+                        @endif
+
+                        {{-- Menu untuk Admin --}}
+                        @if(auth()->user()->isAdmin())
+                            <a href="{{ route('admin.dashboard') }}"
+                               class="text-gray-300 hover:text-[#FF8FC7] transition">
+                                Admin Panel
+                            </a>
+                        @endif
+
+                        {{-- Dropdown User Menu --}}
+                        <div class="relative" x-data="{ open: false }">
+                            <button @click="open = !open"
+                                    class="flex items-center space-x-2 text-gray-300 hover:text-[#FF8FC7] transition">
+                                <span>{{ auth()->user()->name }}</span>
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                          d="M19 9l-7 7-7-7"></path>
+                                </svg>
+                            </button>
+
+                            <div x-show="open" @click.away="open = false" x-cloak
+                                 class="absolute right-0 mt-2 w-48 bg-gray-950 border border-gray-800 rounded-lg shadow-lg py-1 z-50">
+
+                                @if(auth()->user()->isOrganizer())
+                                    <a href="{{ route('organizer.events.index') }}"
+                                       class="block px-4 py-2 text-sm text-gray-300 hover:bg-[#FF8FC7]/10 hover:text-[#FF8FC7]">
+                                        Event Saya
+                                    </a>
+                                    <a href="{{ route('organizer.orders.index') }}"
+                                       class="block px-4 py-2 text-sm text-gray-300 hover:bg-[#FF8FC7]/10 hover:text-[#FF8FC7]">
+                                        Pesanan
+                                    </a>
+                                    <a href="{{ route('organizer.settings.index') }}"
+                                       class="block px-4 py-2 text-sm text-gray-300 hover:bg-[#FF8FC7]/10 hover:text-[#FF8FC7]">
+                                        Pengaturan
+                                    </a>
+                                @endif
+
+                                @if(auth()->user()->isAdmin())
+                                    <a href="{{ route('admin.events.index') }}"
+                                       class="block px-4 py-2 text-sm text-gray-300 hover:bg-[#FF8FC7]/10 hover:text-[#FF8FC7]">
+                                        Kelola Events
+                                    </a>
+                                @endif
+
+                                <hr class="my-1 border-gray-800">
+
+                                <form method="POST" action="{{ route('logout') }}">
+                                    @csrf
+                                    <button type="submit"
+                                            class="block w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-red-500/10">
+                                        Keluar
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    @else
+                        <a href="{{ route('login') }}"
+                           class="text-gray-300 hover:text-[#FF8FC7] transition">
+                            Masuk
+                        </a>
+                        <a href="{{ route('register.organizer') }}"
+                           class="bg-[#FF8FC7] text-black px-4 py-2 rounded-lg hover:bg-pink-400 transition font-semibold">
+                            Daftar Organizer
+                        </a>
+                    @endauth
+                </div>
+
+                <!-- Mobile Menu -->
+                <div class="md:hidden flex items-center">
+                    <div x-data="{ mobileOpen: false }">
+                        <button @click="mobileOpen = !mobileOpen" class="text-gray-300">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                      d="M19 9l-7 7-7-7"></path>
+                                      d="M4 6h16M4 12h16M4 18h16"></path>
                             </svg>
                         </button>
 
-                        <div x-show="open" @click.away="open = false" x-cloak
-                             class="absolute right-0 mt-2 w-48 bg-gray-950 border border-gray-800 rounded-lg shadow-lg py-1 z-50">
+                        <div x-show="mobileOpen" @click.away="mobileOpen = false"
+                             class="absolute top-16 left-0 right-0 bg-gray-950 border-t border-gray-800 shadow-lg p-4 z-50">
 
-                            <a href="{{ route('orders.index') }}"
-                               class="block px-4 py-2 text-sm text-gray-300 hover:bg-[#FF8FC7]/10 hover:text-[#FF8FC7]">
-                                Pesanan Saya
+                            <a href="{{ route('events.index') }}"
+                               class="block py-2 text-gray-300 hover:text-[#FF8FC7]">
+                                Events
                             </a>
 
-                            <a href="{{ route('profile.index') }}"
-                               class="block px-4 py-2 text-sm text-gray-300 hover:bg-[#FF8FC7]/10 hover:text-[#FF8FC7]">
-                                Profil
+                            <a href="{{ route('tickets.lookup') }}"
+                               class="block py-2 text-gray-300 hover:text-[#FF8FC7]">
+                                Cek Tiket
                             </a>
 
-                            @if(auth()->user()->isOrganizer())
-                                <a href="{{ route('organizer.dashboard') }}"
-                                   class="block px-4 py-2 text-sm text-gray-300 hover:bg-[#FF8FC7]/10 hover:text-[#FF8FC7]">
-                                    Dashboard Organizer
+                            @auth
+                                @if(auth()->user()->isOrganizer())
+                                    <a href="{{ route('organizer.dashboard') }}"
+                                       class="block py-2 text-gray-300 hover:text-[#FF8FC7]">
+                                        Dashboard
+                                    </a>
+                                @endif
+
+                                @if(auth()->user()->isAdmin())
+                                    <a href="{{ route('admin.dashboard') }}"
+                                       class="block py-2 text-gray-300 hover:text-[#FF8FC7]">
+                                        Admin Panel
+                                    </a>
+                                @endif
+
+                                <hr class="my-2 border-gray-800">
+
+                                <form method="POST" action="{{ route('logout') }}" class="mt-2">
+                                    @csrf
+                                    <button type="submit" class="text-red-400 hover:text-red-300">Keluar</button>
+                                </form>
+                            @else
+                                <a href="{{ route('login') }}"
+                                   class="block py-2 text-gray-300 hover:text-[#FF8FC7]">
+                                    Masuk
                                 </a>
-                            @endif
-
-                            @if(auth()->user()->isAdmin())
-                                <a href="{{ route('admin.dashboard') }}"
-                                   class="block px-4 py-2 text-sm text-gray-300 hover:bg-[#FF8FC7]/10 hover:text-[#FF8FC7]">
-                                    Dashboard Admin
+                                <a href="{{ route('register.organizer') }}"
+                                   class="block py-2 text-[#FF8FC7] font-semibold">
+                                    Daftar Organizer
                                 </a>
-                            @endif
-
-                            <hr class="my-1 border-gray-800">
-
-                            <form method="POST" action="{{ route('logout') }}">
-                                @csrf
-                                <button type="submit"
-                                        class="block w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-red-500/10">
-                                    Keluar
-                                </button>
-                            </form>
+                            @endauth
                         </div>
                     </div>
-                @else
-                    <a href="{{ route('login') }}"
-                       class="text-gray-300 hover:text-[#FF8FC7] transition">
-                        Masuk
-                    </a>
-                    <a href="{{ route('register') }}"
-                       class="bg-[#FF8FC7] text-black px-4 py-2 rounded-lg hover:bg-pink-400 transition font-semibold">
-                        Daftar
-                    </a>
-                @endauth
-            </div>
-
-            <!-- Mobile Menu -->
-            <div class="md:hidden flex items-center">
-                <div x-data="{ mobileOpen: false }">
-                    <button @click="mobileOpen = !mobileOpen" class="text-gray-300">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                  d="M4 6h16M4 12h16M4 18h16"></path>
-                        </svg>
-                    </button>
-
-                    <div x-show="mobileOpen" @click.away="mobileOpen = false"
-                         class="absolute top-16 left-0 right-0 bg-gray-950 border-t border-gray-800 shadow-lg p-4 z-50">
-
-                        <a href="{{ route('events.index') }}"
-                           class="block py-2 text-gray-300 hover:text-[#FF8FC7]">
-                            Events
-                        </a>
-
-                        @auth
-                            <a href="{{ route('tickets.index') }}" class="block py-2 text-gray-300 hover:text-[#FF8FC7]">Tiket Saya</a>
-                            <a href="{{ route('orders.index') }}" class="block py-2 text-gray-300 hover:text-[#FF8FC7]">Pesanan Saya</a>
-                            <a href="{{ route('profile.index') }}" class="block py-2 text-gray-300 hover:text-[#FF8FC7]">Profil</a>
-
-                            <form method="POST" action="{{ route('logout') }}" class="mt-2">
-                                @csrf
-                                <button type="submit" class="text-red-400 hover:text-red-300">Keluar</button>
-                            </form>
-                        @else
-                            <a href="{{ route('login') }}" class="block py-2 text-gray-300 hover:text-[#FF8FC7]">Masuk</a>
-                            <a href="{{ route('register') }}" class="block py-2 text-[#FF8FC7] font-semibold">Daftar</a>
-                        @endauth
-                    </div>
                 </div>
+
             </div>
-
         </div>
-    </div>
-</nav>
-
+    </nav>
 
     <!-- Flash Messages -->
     @if(session('success'))
@@ -988,8 +1122,6 @@ FILE: resources/views/layouts/app.blade.php (212 lines)
 
         </div>
     </footer>
-
-
 
 </div>
 
@@ -1332,251 +1464,277 @@ FILE: resources/views/organizer/dashboard/index.blade.php (50 lines)
 </x-app-layout>
 
 ======================================================================
-FILE: resources/views/organizer/events/create.blade.php (245 lines)
+FILE: resources/views/organizer/events/create.blade.php (271 lines)
 ======================================================================
 <x-organizer-layout>
-    <div class="max-w-4xl">
-        <nav class="text-sm mb-6">
-            <a href="{{ route('organizer.events.index') }}" class="text-blue-600 hover:text-blue-800">← Kembali ke Event Saya</a>
-        </nav>
+    <div class="max-w-4xl mx-auto px-4 py-8">
+        <div class="mb-6">
+            <h1 class="text-2xl font-bold text-gray-900">Buat Event Baru</h1>
+            <p class="text-sm text-gray-600 mt-1">Isi informasi event Anda. Pastikan semua data akurat sebelum publish.</p>
+        </div>
 
-        <h1 class="text-2xl font-bold text-gray-900 mb-6">Buat Event Baru</h1>
+        @if ($errors->any())
+            <div class="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
+                <div class="flex items-start">
+                    <svg class="w-5 h-5 text-red-500 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                    </svg>
+                    <div class="ml-3">
+                        <h3 class="text-sm font-medium text-red-800">Ada beberapa kesalahan:</h3>
+                        <ul class="mt-2 text-sm text-red-700 list-disc list-inside">
+                            @foreach ($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        @endif
 
-        <form action="{{ route('organizer.events.store') }}" method="POST" enctype="multipart/form-data" x-data="eventForm()">
+        <form method="POST" action="{{ route('organizer.events.store') }}" enctype="multipart/form-data" class="space-y-6">
             @csrf
 
-            <!-- Basic Info -->
-            <div class="bg-white rounded-xl shadow-sm overflow-hidden mb-6">
-                <div class="p-6 border-b">
-                    <h2 class="text-lg font-semibold text-gray-900">Informasi Dasar</h2>
-                </div>
-                <div class="p-6 space-y-4">
+            {{-- Informasi Dasar --}}
+            <div class="bg-white border border-gray-200 rounded-lg p-6">
+                <h2 class="text-lg font-semibold text-gray-900 mb-4">Informasi Dasar</h2>
+
+                <div class="space-y-4">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Judul Event <span class="text-red-500">*</span></label>
-                        <input type="text" name="title" required value="{{ old('title') }}"
-                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 @error('title') border-red-500 @enderror"
-                               placeholder="Masukkan judul event">
-                        @error('title')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                        @enderror
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Judul Event *</label>
+                        <input type="text" name="title" value="{{ old('title') }}"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                            placeholder="Contoh: Java Jazz Festival 2026" required>
                     </div>
 
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Kategori <span class="text-red-500">*</span></label>
-                        <select name="category_id" required
-                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 @error('category_id') border-red-500 @enderror">
-                            <option value="">Pilih Kategori</option>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Kategori *</label>
+                        <select name="category_id" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent" required>
+                            <option value="">Pilih kategori</option>
                             @foreach($categories as $category)
                                 <option value="{{ $category->id }}" {{ old('category_id') == $category->id ? 'selected' : '' }}>
                                     {{ $category->name }}
                                 </option>
                             @endforeach
                         </select>
-                        @error('category_id')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                        @enderror
                     </div>
 
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Deskripsi Singkat</label>
-                        <input type="text" name="short_description" value="{{ old('short_description') }}"
-                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                               placeholder="Ringkasan singkat event (maks 500 karakter)">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Deskripsi Event * (min. 100 karakter)</label>
+                        <textarea name="description" rows="6"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                            placeholder="Jelaskan event Anda secara detail..." required>{{ old('description') }}</textarea>
+                        <p class="text-xs text-gray-500 mt-1">Tips: Jelaskan apa yang menarik dari event Anda, siapa yang akan tampil, dan apa yang didapatkan pengunjung.</p>
                     </div>
 
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Deskripsi Lengkap <span class="text-red-500">*</span></label>
-                        <textarea name="description" rows="6" required
-                                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 @error('description') border-red-500 @enderror"
-                                  placeholder="Jelaskan detail event Anda">{{ old('description') }}</textarea>
-                        @error('description')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                        @enderror
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Poster Event</label>
+                        <input type="file" name="poster" accept="image/jpeg,image/png,image/jpg"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent">
+                        <p class="text-xs text-gray-500 mt-1">Format: JPG, PNG. Maksimal 2MB. Rekomendasi ukuran: 1080x1350px</p>
                     </div>
                 </div>
             </div>
 
-            <!-- Date & Time -->
-            <div class="bg-white rounded-xl shadow-sm overflow-hidden mb-6">
-                <div class="p-6 border-b">
-                    <h2 class="text-lg font-semibold text-gray-900">Tanggal & Waktu</h2>
-                </div>
-                <div class="p-6">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Tanggal Mulai <span class="text-red-500">*</span></label>
-                            <input type="date" name="start_date" required value="{{ old('start_date') }}"
-                                   min="{{ date('Y-m-d', strtotime('+1 day')) }}"
-                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 @error('start_date') border-red-500 @enderror">
-                            @error('start_date')
-                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                            @enderror
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Tanggal Selesai <span class="text-red-500">*</span></label>
-                            <input type="date" name="end_date" required value="{{ old('end_date') }}"
-                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 @error('end_date') border-red-500 @enderror">
-                            @error('end_date')
-                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                            @enderror
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Jam Mulai <span class="text-red-500">*</span></label>
-                            <input type="time" name="start_time" required value="{{ old('start_time', '09:00') }}"
-                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Jam Selesai <span class="text-red-500">*</span></label>
-                            <input type="time" name="end_time" required value="{{ old('end_time', '17:00') }}"
-                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
-                        </div>
+            {{-- Tanggal & Waktu --}}
+            <div class="bg-white border border-gray-200 rounded-lg p-6">
+                <h2 class="text-lg font-semibold text-gray-900 mb-4">Tanggal & Waktu</h2>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Tanggal Mulai *</label>
+                        <input type="date" name="start_date" value="{{ old('start_date') }}"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent" required>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Tanggal Selesai *</label>
+                        <input type="date" name="end_date" value="{{ old('end_date') }}"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent" required>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Jam Mulai *</label>
+                        <input type="time" name="start_time" value="{{ old('start_time') }}"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent" required>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Jam Selesai *</label>
+                        <input type="time" name="end_time" value="{{ old('end_time') }}"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent" required>
                     </div>
                 </div>
             </div>
 
-            <!-- Location -->
-            <div class="bg-white rounded-xl shadow-sm overflow-hidden mb-6">
-                <div class="p-6 border-b">
-                    <h2 class="text-lg font-semibold text-gray-900">Lokasi</h2>
-                </div>
-                <div class="p-6 space-y-4">
-                    <div class="flex items-center gap-4 mb-4">
-                        <label class="flex items-center">
-                            <input type="checkbox" name="is_online" value="1" x-model="isOnline"
-                                   class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
-                            <span class="ml-2 text-sm text-gray-700">Event Online</span>
-                        </label>
+            {{-- Lokasi --}}
+            <div class="bg-white border border-gray-200 rounded-lg p-6">
+                <h2 class="text-lg font-semibold text-gray-900 mb-4">Lokasi</h2>
+
+                <div class="space-y-4">
+                    <div class="flex items-center">
+                        <input type="checkbox" name="is_online" id="is_online" value="1" {{ old('is_online') ? 'checked' : '' }}
+                            class="w-4 h-4 text-pink-600 border-gray-300 rounded focus:ring-pink-500">
+                        <label for="is_online" class="ml-2 text-sm text-gray-700">Event Online</label>
                     </div>
 
-                    <div x-show="isOnline">
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Link Event Online</label>
+                    <div id="online-url-field" style="{{ old('is_online') ? '' : 'display:none;' }}">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Link Online Event</label>
                         <input type="url" name="online_url" value="{{ old('online_url') }}"
-                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                               placeholder="https://zoom.us/...">
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                            placeholder="https://zoom.us/j/123456789">
                     </div>
 
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Nama Venue <span class="text-red-500">*</span></label>
-                        <input type="text" name="venue_name" required value="{{ old('venue_name') }}"
-                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 @error('venue_name') border-red-500 @enderror"
-                               placeholder="Nama gedung/tempat">
-                        @error('venue_name')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                        @enderror
-                    </div>
+                    <div id="venue-fields" style="{{ old('is_online') ? 'display:none;' : '' }}">
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Nama Venue *</label>
+                                <input type="text" name="venue_name" value="{{ old('venue_name') }}"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                                    placeholder="Contoh: Jakarta Convention Center">
+                            </div>
 
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Alamat Lengkap <span class="text-red-500">*</span></label>
-                        <textarea name="venue_address" rows="2" required
-                                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 @error('venue_address') border-red-500 @enderror"
-                                  placeholder="Alamat lengkap venue">{{ old('venue_address') }}</textarea>
-                        @error('venue_address')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                        @enderror
-                    </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Alamat Lengkap *</label>
+                                <textarea name="venue_address" rows="2"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                                    placeholder="Jalan, nomor, gedung">{{ old('venue_address') }}</textarea>
+                            </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Kota <span class="text-red-500">*</span></label>
-                            <input type="text" name="city" required value="{{ old('city') }}"
-                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 @error('city') border-red-500 @enderror">
-                            @error('city')
-                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                            @enderror
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Provinsi <span class="text-red-500">*</span></label>
-                            <input type="text" name="province" required value="{{ old('province') }}"
-                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 @error('province') border-red-500 @enderror">
-                            @error('province')
-                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                            @enderror
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Kota *</label>
+                                    <input type="text" name="city" value="{{ old('city') }}"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                                        placeholder="Jakarta">
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Provinsi *</label>
+                                    <input type="text" name="province" value="{{ old('province') }}"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                                        placeholder="DKI Jakarta">
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Tickets -->
-            <div class="bg-white rounded-xl shadow-sm overflow-hidden mb-6">
-                <div class="p-6 border-b flex items-center justify-between">
+            {{-- Tiket --}}
+            <div class="bg-white border border-gray-200 rounded-lg p-6">
+                <div class="flex items-center justify-between mb-4">
                     <h2 class="text-lg font-semibold text-gray-900">Tiket</h2>
-                    <button type="button" @click="addTicket()"
-                            class="text-sm text-blue-600 hover:text-blue-800 font-medium">
+                    <button type="button" id="add-ticket-btn" class="text-sm text-pink-600 hover:text-pink-700 font-medium">
                         + Tambah Tiket
                     </button>
                 </div>
-                <div class="p-6 space-y-4">
-                    <template x-for="(ticket, index) in tickets" :key="index">
-                        <div class="border border-gray-200 rounded-lg p-4 relative">
-                            <button type="button" @click="removeTicket(index)" x-show="tickets.length > 1"
-                                    class="absolute top-2 right-2 text-red-500 hover:text-red-700">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                                </svg>
-                            </button>
 
-                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Nama Tiket</label>
-                                    <input type="text" :name="'tickets[' + index + '][name]'" x-model="ticket.name" required
-                                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                                           placeholder="VIP, Regular, dll">
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Harga (Rp)</label>
-                                    <input type="number" :name="'tickets[' + index + '][price]'" x-model="ticket.price" required min="0"
-                                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                                           placeholder="0 untuk gratis">
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Kuota</label>
-                                    <input type="number" :name="'tickets[' + index + '][stock]'" x-model="ticket.stock" required min="1"
-                                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                                           placeholder="Jumlah tiket tersedia">
-                                </div>
+                <div id="tickets-container" class="space-y-4">
+                    <div class="ticket-item border border-gray-200 rounded-lg p-4">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Nama Tiket *</label>
+                                <input type="text" name="tickets[0][name]" value="{{ old('tickets.0.name') }}"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                                    placeholder="Contoh: Regular" required>
                             </div>
-                            <div class="mt-3">
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Deskripsi Tiket (opsional)</label>
-                                <input type="text" :name="'tickets[' + index + '][description]'" x-model="ticket.description"
-                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                                       placeholder="Benefit tiket ini">
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Harga (Rp) *</label>
+                                <input type="number" name="tickets[0][price]" value="{{ old('tickets.0.price', 0) }}" min="0"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                                    placeholder="0" required>
+                                <p class="text-xs text-gray-500 mt-1">Isi 0 untuk tiket gratis</p>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Stok *</label>
+                                <input type="number" name="tickets[0][stock]" value="{{ old('tickets.0.stock') }}" min="1"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                                    placeholder="100" required>
                             </div>
                         </div>
-                    </template>
-                    @error('tickets')
-                        <p class="text-sm text-red-600">{{ $message }}</p>
-                    @enderror
+                    </div>
                 </div>
             </div>
 
-            <!-- Actions -->
-            <div class="flex items-center gap-4">
-                <button type="submit" class="px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition">
-                    Simpan Event
-                </button>
-                <a href="{{ route('organizer.events.index') }}" class="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition">
+            {{-- Actions --}}
+            <div class="flex items-center justify-between pt-4 border-t border-gray-200">
+                <a href="{{ route('organizer.events.index') }}" class="text-sm text-gray-600 hover:text-gray-900">
                     Batal
                 </a>
+                <button type="submit" class="px-6 py-2.5 bg-pink-600 text-white font-medium rounded-lg hover:bg-pink-700 focus:ring-4 focus:ring-pink-200">
+                    Simpan Event
+                </button>
             </div>
         </form>
     </div>
 
+    @push('scripts')
     <script>
-        function eventForm() {
-            return {
-                isOnline: {{ old('is_online') ? 'true' : 'false' }},
-                tickets: [
-                    { name: '', price: 0, stock: 100, description: '' }
-                ],
-                addTicket() {
-                    this.tickets.push({ name: '', price: 0, stock: 100, description: '' });
-                },
-                removeTicket(index) {
-                    this.tickets.splice(index, 1);
+        // Toggle online event
+        document.getElementById('is_online').addEventListener('change', function() {
+            const onlineField = document.getElementById('online-url-field');
+            const venueFields = document.getElementById('venue-fields');
+
+            if (this.checked) {
+                onlineField.style.display = 'block';
+                venueFields.style.display = 'none';
+            } else {
+                onlineField.style.display = 'none';
+                venueFields.style.display = 'block';
+            }
+        });
+
+        // Add ticket dynamic
+        let ticketIndex = 1;
+        document.getElementById('add-ticket-btn').addEventListener('click', function() {
+            const container = document.getElementById('tickets-container');
+            const ticketHtml = `
+                <div class="ticket-item border border-gray-200 rounded-lg p-4">
+                    <div class="flex items-start justify-between mb-3">
+                        <span class="text-sm font-medium text-gray-700">Tiket ${ticketIndex + 1}</span>
+                        <button type="button" class="remove-ticket text-sm text-red-600 hover:text-red-700">Hapus</button>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Nama Tiket *</label>
+                            <input type="text" name="tickets[${ticketIndex}][name]"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                                placeholder="Contoh: VIP" required>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Harga (Rp) *</label>
+                            <input type="number" name="tickets[${ticketIndex}][price]" value="0" min="0"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                                placeholder="0" required>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Stok *</label>
+                            <input type="number" name="tickets[${ticketIndex}][stock]" min="1"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                                placeholder="100" required>
+                        </div>
+                    </div>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', ticketHtml);
+            ticketIndex++;
+        });
+
+        // Remove ticket
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('remove-ticket')) {
+                const ticketItem = e.target.closest('.ticket-item');
+                if (document.querySelectorAll('.ticket-item').length > 1) {
+                    ticketItem.remove();
+                } else {
+                    alert('Minimal harus ada 1 tiket');
                 }
             }
-        }
+        });
     </script>
+    @endpush
 </x-organizer-layout>
 
 ======================================================================
@@ -1889,142 +2047,149 @@ FILE: resources/views/organizer/events/index.blade.php (152 lines)
 </x-organizer-layout>
 
 ======================================================================
-FILE: resources/views/organizer/events/show.blade.php (198 lines)
+FILE: resources/views/organizer/events/show.blade.php (234 lines)
 ======================================================================
 <x-organizer-layout>
-    <div class="max-w-5xl">
-        <nav class="text-sm mb-6">
-            <a href="{{ route('organizer.events.index') }}" class="text-blue-600 hover:text-blue-800">← Kembali ke Event Saya</a>
-        </nav>
+    <div class="max-w-6xl mx-auto px-4 py-8">
+        @if (session('success'))
+            <div class="mb-6 bg-green-50 border border-green-200 rounded-lg p-4">
+                <p class="text-sm text-green-800">{{ session('success') }}</p>
+            </div>
+        @endif
 
-        <!-- Header -->
-        <div class="bg-white rounded-xl shadow-sm overflow-hidden mb-6">
-            <div class="p-6">
-                <div class="flex items-start justify-between">
-                    <div>
-                        <h1 class="text-2xl font-bold text-gray-900">{{ $event->title }}</h1>
-                        <p class="text-gray-600 mt-1">{{ $event->category->name ?? 'Uncategorized' }}</p>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        @if($event->status === 'draft')
-                            <form action="{{ route('organizer.events.publish', $event) }}" method="POST">
-                                @csrf
-                                <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">
-                                    Publish
-                                </button>
-                            </form>
-                        @elseif($event->status === 'published')
-                            <form action="{{ route('organizer.events.unpublish', $event) }}" method="POST">
-                                @csrf
-                                <button type="submit" class="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition">
-                                    Unpublish
-                                </button>
-                            </form>
-                        @endif
-                        <a href="{{ route('organizer.events.edit', $event) }}" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition">
-                            Edit
-                        </a>
-                    </div>
-                </div>
+        @if (session('error'))
+            <div class="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
+                <p class="text-sm text-red-800">{{ session('error') }}</p>
+            </div>
+        @endif
 
-                <div class="mt-4 flex items-center gap-4">
-                    @php
-                        $statusColors = [
-                            'draft' => 'bg-gray-100 text-gray-800',
-                            'published' => 'bg-green-100 text-green-800',
-                            'completed' => 'bg-blue-100 text-blue-800',
-                            'cancelled' => 'bg-red-100 text-red-800',
-                        ];
-                    @endphp
-                    <span class="px-3 py-1 rounded-full text-sm font-medium {{ $statusColors[$event->status] ?? 'bg-gray-100' }}">
-                        {{ ucfirst($event->status) }}
+        {{-- Header --}}
+        <div class="flex items-start justify-between mb-6">
+            <div>
+                <div class="flex items-center gap-3 mb-2">
+                    <h1 class="text-2xl font-bold text-gray-900">{{ $event->title }}</h1>
+                    <span class="px-3 py-1 text-xs font-medium rounded-full
+                        @if($event->status->value === 'draft') bg-gray-100 text-gray-700
+                        @elseif($event->status->value === 'published') bg-green-100 text-green-700
+                        @else bg-blue-100 text-blue-700
+                        @endif">
+                        {{ $event->status->label() }}
                     </span>
-                    @if($event->status === 'published')
-                        <a href="{{ route('events.show', $event) }}" target="_blank" class="text-blue-600 hover:text-blue-800 text-sm">
-                            Lihat Halaman Publik →
-                        </a>
-                    @endif
                 </div>
+                <p class="text-sm text-gray-600">{{ $event->category->name }} • {{ $event->city }}</p>
+            </div>
+
+            <div class="flex items-center gap-2">
+                @if($event->status->canEdit())
+                    <a href="{{ route('organizer.events.edit', $event) }}"
+                        class="px-4 py-2 border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50">
+                        Edit
+                    </a>
+                @endif
+
+                @if($event->status->canPublish())
+                    <form method="POST" action="{{ route('organizer.events.publish', $event) }}" class="inline">
+                        @csrf
+                        <button type="submit" class="px-4 py-2 bg-pink-600 text-white text-sm font-medium rounded-lg hover:bg-pink-700">
+                            Publikasikan Event
+                        </button>
+                    </form>
+                @endif
+
+                @if($event->status->canUnpublish())
+                    <form method="POST" action="{{ route('organizer.events.unpublish', $event) }}" class="inline"
+                        onsubmit="return confirm('Yakin ingin unpublish event ini?')">
+                        @csrf
+                        <button type="submit" class="px-4 py-2 border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50">
+                            Unpublish
+                        </button>
+                    </form>
+                @endif
             </div>
         </div>
 
-        <!-- Stats -->
+        {{-- Stats --}}
         <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-            <div class="bg-white rounded-xl shadow-sm p-6">
-                <p class="text-sm text-gray-500">Total Pesanan</p>
+            <div class="bg-white border border-gray-200 rounded-lg p-4">
+                <p class="text-sm text-gray-600 mb-1">Total Pesanan</p>
                 <p class="text-2xl font-bold text-gray-900">{{ $stats['total_orders'] }}</p>
             </div>
-            <div class="bg-white rounded-xl shadow-sm p-6">
-                <p class="text-sm text-gray-500">Pesanan Lunas</p>
+            <div class="bg-white border border-gray-200 rounded-lg p-4">
+                <p class="text-sm text-gray-600 mb-1">Pesanan Dibayar</p>
                 <p class="text-2xl font-bold text-green-600">{{ $stats['paid_orders'] }}</p>
             </div>
-            <div class="bg-white rounded-xl shadow-sm p-6">
-                <p class="text-sm text-gray-500">Tiket Terjual</p>
-                <p class="text-2xl font-bold text-blue-600">{{ $stats['tickets_sold'] ?? 0 }}</p>
+            <div class="bg-white border border-gray-200 rounded-lg p-4">
+                <p class="text-sm text-gray-600 mb-1">Tiket Terjual</p>
+                <p class="text-2xl font-bold text-blue-600">{{ $stats['tickets_sold'] }}</p>
             </div>
-            <div class="bg-white rounded-xl shadow-sm p-6">
-                <p class="text-sm text-gray-500">Pendapatan</p>
-                <p class="text-2xl font-bold text-gray-900">Rp {{ number_format($stats['total_revenue'] ?? 0, 0, ',', '.') }}</p>
+            <div class="bg-white border border-gray-200 rounded-lg p-4">
+                <p class="text-sm text-gray-600 mb-1">Total Revenue</p>
+                <p class="text-2xl font-bold text-gray-900">Rp {{ number_format($stats['total_revenue'], 0, ',', '.') }}</p>
             </div>
         </div>
 
+        {{-- Content --}}
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <!-- Event Details -->
             <div class="lg:col-span-2 space-y-6">
-                <!-- Info -->
-                <div class="bg-white rounded-xl shadow-sm overflow-hidden">
-                    <div class="p-6 border-b">
-                        <h2 class="text-lg font-semibold text-gray-900">Detail Event</h2>
+                {{-- Event Info --}}
+                <div class="bg-white border border-gray-200 rounded-lg p-6">
+                    <h2 class="text-lg font-semibold text-gray-900 mb-4">Informasi Event</h2>
+
+                    @if($event->poster)
+                        <img src="{{ Storage::url($event->poster) }}" alt="{{ $event->title }}"
+                            class="w-full h-64 object-cover rounded-lg mb-4">
+                    @endif
+
+                    <div class="space-y-3 text-sm">
+                        <div class="flex items-start gap-3">
+                            <svg class="w-5 h-5 text-gray-400 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                            </svg>
+                            <div>
+                                <p class="font-medium text-gray-900">{{ $event->start_date->format('d M Y') }} - {{ $event->end_date->format('d M Y') }}</p>
+                                <p class="text-gray-600">{{ $event->start_time }} - {{ $event->end_time }} WIB</p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-start gap-3">
+                            <svg class="w-5 h-5 text-gray-400 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                            </svg>
+                            <div>
+                                <p class="font-medium text-gray-900">{{ $event->venue_name }}</p>
+                                <p class="text-gray-600">{{ $event->venue_address }}, {{ $event->city }}, {{ $event->province }}</p>
+                            </div>
+                        </div>
                     </div>
-                    <div class="p-6 space-y-4">
-                        <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <p class="text-sm text-gray-500">Tanggal</p>
-                                <p class="font-medium">{{ $event->start_date->format('d M Y') }} - {{ $event->end_date->format('d M Y') }}</p>
-                            </div>
-                            <div>
-                                <p class="text-sm text-gray-500">Waktu</p>
-                                <p class="font-medium">{{ $event->start_time }} - {{ $event->end_time }}</p>
-                            </div>
-                        </div>
-                        <div>
-                            <p class="text-sm text-gray-500">Lokasi</p>
-                            <p class="font-medium">{{ $event->venue_name }}</p>
-                            <p class="text-gray-600">{{ $event->venue_address }}</p>
-                            <p class="text-gray-600">{{ $event->city }}, {{ $event->province }}</p>
-                        </div>
-                        <div>
-                            <p class="text-sm text-gray-500">Deskripsi</p>
-                            <p class="text-gray-600 whitespace-pre-line">{{ $event->description }}</p>
-                        </div>
+
+                    <div class="mt-4 pt-4 border-t border-gray-200">
+                        <h3 class="font-medium text-gray-900 mb-2">Deskripsi</h3>
+                        <p class="text-sm text-gray-700 whitespace-pre-line">{{ $event->description }}</p>
                     </div>
                 </div>
 
-                <!-- Tickets -->
-                <div class="bg-white rounded-xl shadow-sm overflow-hidden">
-                    <div class="p-6 border-b">
-                        <h2 class="text-lg font-semibold text-gray-900">Tiket</h2>
-                    </div>
-                    <div class="divide-y">
+                {{-- Tickets --}}
+                <div class="bg-white border border-gray-200 rounded-lg p-6">
+                    <h2 class="text-lg font-semibold text-gray-900 mb-4">Tiket</h2>
+
+                    <div class="space-y-3">
                         @foreach($event->tickets as $ticket)
                             @foreach($ticket->variants as $variant)
-                                <div class="p-4 flex items-center justify-between">
+                                <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
                                     <div>
                                         <p class="font-medium text-gray-900">{{ $ticket->name }}</p>
-                                        <p class="text-sm text-gray-500">{{ $ticket->description }}</p>
-                                    </div>
-                                    <div class="text-right">
-                                        <p class="font-medium text-gray-900">
-                                            @if($variant->price > 0)
-                                                Rp {{ number_format($variant->price, 0, ',', '.') }}
-                                            @else
-                                                GRATIS
-                                            @endif
-                                        </p>
-                                        <p class="text-sm text-gray-500">
-                                            {{ $variant->sold_count }}/{{ $variant->stock }} terjual
+                                        <p class="text-sm text-gray-600">
+                                            Stok: {{ $variant->stock }} • Terjual: {{ $variant->sold_count }} • Tersisa: {{ $variant->available_stock }}
                                         </p>
                                     </div>
+                                    <p class="text-lg font-bold text-gray-900">
+                                        @if($variant->price == 0)
+                                            Gratis
+                                        @else
+                                            Rp {{ number_format($variant->price, 0, ',', '.') }}
+                                        @endif
+                                    </p>
                                 </div>
                             @endforeach
                         @endforeach
@@ -2032,58 +2197,87 @@ FILE: resources/views/organizer/events/show.blade.php (198 lines)
                 </div>
             </div>
 
-            <!-- Sidebar -->
+            {{-- Sidebar --}}
             <div class="space-y-6">
-                <!-- Quick Actions -->
-                <div class="bg-white rounded-xl shadow-sm overflow-hidden">
-                    <div class="p-6 border-b">
-                        <h2 class="text-lg font-semibold text-gray-900">Aksi Cepat</h2>
+                @if($event->status->value === 'draft')
+                    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                        <h3 class="font-medium text-yellow-900 mb-2">Event belum dipublikasi</h3>
+                        <p class="text-sm text-yellow-800 mb-3">Pastikan semua informasi sudah benar sebelum publikasi.</p>
+
+                        <ul class="text-xs text-yellow-700 space-y-1 mb-4">
+                            <li class="flex items-center gap-2">
+                                @if($event->poster)
+                                    <svg class="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                                @else
+                                    <svg class="w-4 h-4 text-red-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/></svg>
+                                @endif
+                                Poster event
+                            </li>
+                            <li class="flex items-center gap-2">
+                                @if(strlen($event->description) >= 100)
+                                    <svg class="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                                @else
+                                    <svg class="w-4 h-4 text-red-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/></svg>
+                                @endif
+                                Deskripsi lengkap (min. 100 karakter)
+                            </li>
+                            <li class="flex items-center gap-2">
+                                @if($event->tickets->count() > 0)
+                                    <svg class="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                                @else
+                                    <svg class="w-4 h-4 text-red-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/></svg>
+                                @endif
+                                Minimal 1 tiket
+                            </li>
+                            <li class="flex items-center gap-2">
+                                @if(auth()->user()->hasVerifiedEmail())
+                                    <svg class="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                                @else
+                                    <svg class="w-4 h-4 text-red-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/></svg>
+                                @endif
+                                Email terverifikasi
+                            </li>
+                        </ul>
+
+                        @if($event->status->canPublish())
+                            <form method="POST" action="{{ route('organizer.events.publish', $event) }}">
+                                @csrf
+                                <button type="submit" class="w-full px-4 py-2 bg-pink-600 text-white text-sm font-medium rounded-lg hover:bg-pink-700">
+                                    Publikasikan Sekarang
+                                </button>
+                            </form>
+                        @endif
                     </div>
-                    <div class="p-4 space-y-2">
-                        <a href="{{ route('organizer.attendees.event', $event) }}"
-                           class="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition">
-                            <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
-                            </svg>
-                            <span class="text-gray-700">Lihat Peserta</span>
-                        </a>
-                        <a href="{{ route('organizer.orders.index', ['event_id' => $event->id]) }}"
-                           class="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition">
-                            <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
-                            </svg>
-                            <span class="text-gray-700">Lihat Pesanan</span>
-                        </a>
-                        <form action="{{ route('organizer.events.duplicate', $event) }}" method="POST">
+                @endif
+
+                @if(!auth()->user()->hasVerifiedEmail())
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <h3 class="font-medium text-blue-900 mb-2">Verifikasi Email</h3>
+                        <p class="text-sm text-blue-800 mb-3">Email Anda belum diverifikasi. Cek inbox email Anda.</p>
+                        <form method="POST" action="{{ route('verification.send') }}">
                             @csrf
-                            <button type="submit" class="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition text-left">
-                                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
-                                </svg>
-                                <span class="text-gray-700">Duplikasi Event</span>
+                            <button type="submit" class="w-full px-4 py-2 border border-blue-300 text-blue-700 text-sm font-medium rounded-lg hover:bg-blue-100">
+                                Kirim Ulang Email Verifikasi
                             </button>
                         </form>
                     </div>
-                </div>
-
-                <!-- Danger Zone -->
-                @if($event->orders_count === 0)
-                    <div class="bg-white rounded-xl shadow-sm overflow-hidden border border-red-200">
-                        <div class="p-6 border-b border-red-200 bg-red-50">
-                            <h2 class="text-lg font-semibold text-red-800">Zona Berbahaya</h2>
-                        </div>
-                        <div class="p-4">
-                            <form action="{{ route('organizer.events.destroy', $event) }}" method="POST"
-                                  onsubmit="return confirm('Yakin ingin menghapus event ini?')">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="w-full px-4 py-2 border border-red-500 text-red-500 rounded-lg hover:bg-red-50 transition">
-                                    Hapus Event
-                                </button>
-                            </form>
-                        </div>
-                    </div>
                 @endif
+
+                <div class="bg-white border border-gray-200 rounded-lg p-4">
+                    <h3 class="font-medium text-gray-900 mb-3">Quick Actions</h3>
+                    <div class="space-y-2">
+                        <a href="{{ route('organizer.orders.index', ['event_id' => $event->id]) }}"
+                            class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg border border-gray-200">
+                            Lihat Pesanan
+                        </a>
+                        @if($event->status->value === 'published')
+                            <a href="{{ route('events.show', $event->slug) }}" target="_blank"
+                                class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg border border-gray-200">
+                                Lihat di Halaman Publik
+                            </a>
+                        @endif
+                    </div>
+                </div>
             </div>
         </div>
     </div>

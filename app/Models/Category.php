@@ -21,6 +21,9 @@ class Category extends Model
         'is_active',
     ];
 
+    // ← TAMBAHKAN INI: Agar events_count bisa diakses di blade
+    protected $appends = ['events_count'];
+
     protected function casts(): array
     {
         return [
@@ -64,8 +67,15 @@ class Category extends Model
         return $query->orderBy('sort_order')->orderBy('name');
     }
 
+    // ← SUDAH ADA: Accessor untuk events_count
     public function getEventsCountAttribute(): int
     {
+        // Cek apakah sudah di-load via withCount
+        if (isset($this->attributes['events_count'])) {
+            return (int) $this->attributes['events_count'];
+        }
+
+        // Fallback: hitung manual jika belum di-load
         return $this->events()->where('status', 'published')->count();
     }
 }

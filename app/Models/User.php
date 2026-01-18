@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\UserRole;
+use App\Notifications\CustomVerifyEmail; // ← TAMBAHKAN INI
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -36,6 +37,16 @@ class User extends Authenticatable implements MustVerifyEmail
             'password' => 'hashed',
             'role' => UserRole::class,
         ];
+    }
+
+    // ← TAMBAHKAN METHOD INI (Custom Email Verification)
+    /**
+     * Override default Laravel email verification
+     * Send custom branded email for ngevent.id
+     */
+    public function sendEmailVerificationNotification()
+    {
+        $this->notify(new CustomVerifyEmail);
     }
 
     // Relationships
@@ -76,19 +87,20 @@ class User extends Authenticatable implements MustVerifyEmail
         if ($this->avatar) {
             return asset('storage/' . $this->avatar);
         }
-        
-        return 'https://ui-avatars.com/api/?name=' . urlencode($this->name) . '&background=2563EB&color=fff';
+
+        // Update: Gunakan brand color ngevent.id (pink)
+        return 'https://ui-avatars.com/api/?name=' . urlencode($this->name) . '&background=FF8FC7&color=000';
     }
 
     public function getInitialsAttribute(): string
     {
         $words = explode(' ', $this->name);
         $initials = '';
-        
+
         foreach (array_slice($words, 0, 2) as $word) {
             $initials .= strtoupper(substr($word, 0, 1));
         }
-        
+
         return $initials;
     }
 }
