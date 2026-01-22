@@ -1,106 +1,256 @@
+/**
+ * app.css
+ * Main CSS entry point for ngevent.id
+ * Loads Tailwind + custom design system
+ */
+
+/* ========================================
+   IMPORTS
+   ======================================== */
+
+/* Import design tokens (variables) */
+@import './partials/_variables.css';
+
+/* Import base styles (reset, typography) */
+@import './partials/_base.css';
+
+/* Import reusable components */
+@import './partials/_components.css';
+
+/* Import custom utilities */
+@import './partials/_utilities.css';
+
+/* ========================================
+   TAILWIND LAYERS
+   ======================================== */
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* ================================
-   NGEVENT.ID DESIGN SYSTEM
-   Theme: Black & Pink (#FF8FC7)
-   ================================ */
+/* ========================================
+   GLOBAL OVERRIDES
+   ======================================== */
+
+@layer base {
+    /* Better scrollbar for dark theme */
+    ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+        @apply bg-gray-950;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        @apply bg-gray-700 rounded-full;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+        @apply bg-gray-600;
+    }
+
+    /* Selection color */
+    ::selection {
+        @apply bg-primary text-black;
+    }
+
+    /* Focus visible for accessibility */
+    :focus-visible {
+        @apply outline-2 outline-offset-2 outline-primary;
+    }
+}
+
+/* ========================================
+   CUSTOM COMPONENTS (Tailwind @apply)
+   ======================================== */
 
 @layer components {
-
-    /* ---------- BUTTON ---------- */
-    .btn {
-        @apply inline-flex items-center justify-center px-4 py-2 font-medium rounded-lg
-               transition focus:outline-none focus:ring-2 focus:ring-offset-2
-               focus:ring-offset-black;
-    }
-
+    /* Button Primary */
     .btn-primary {
-        @apply bg-[#FF8FC7] text-black
-               hover:bg-pink-400
-               focus:ring-[#FF8FC7];
+        @apply inline-flex items-center justify-center px-6 py-3
+               bg-primary text-white font-semibold rounded-lg
+               hover:bg-primary-hover active:bg-primary-active
+               focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background
+               transition-all duration-200 ease-in-out
+               disabled:opacity-50 disabled:cursor-not-allowed;
     }
 
+    /* Button Secondary */
     .btn-secondary {
-        @apply bg-gray-800 text-gray-200
-               hover:bg-gray-700
-               focus:ring-gray-500;
+        @apply inline-flex items-center justify-center px-6 py-3
+               bg-transparent border-2 border-primary text-primary font-semibold rounded-lg
+               hover:bg-primary hover:text-white
+               focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background
+               transition-all duration-200 ease-in-out
+               disabled:opacity-50 disabled:cursor-not-allowed;
     }
 
-    .btn-outline {
-        @apply border-2 border-[#FF8FC7] text-[#FF8FC7]
-               hover:bg-[#FF8FC7]/10
-               focus:ring-[#FF8FC7];
-    }
-
+    /* Button Danger */
     .btn-danger {
-        @apply bg-red-600 text-white
-               hover:bg-red-700
-               focus:ring-red-500;
+        @apply inline-flex items-center justify-center px-6 py-3
+               bg-semantic-error text-white font-semibold rounded-lg
+               hover:bg-red-600 active:bg-red-700
+               focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-background
+               transition-all duration-200 ease-in-out
+               disabled:opacity-50 disabled:cursor-not-allowed;
     }
 
-    /* ---------- INPUT ---------- */
-    .input {
-        @apply w-full px-4 py-2 rounded-lg
-               bg-black text-[#FF8FC7]
-               border border-gray-700
-               placeholder-gray-500
-               focus:ring-2 focus:ring-[#FF8FC7]
-               focus:border-[#FF8FC7]
-               transition;
-    }
-
-    .label {
-        @apply block text-sm font-medium text-gray-300 mb-1;
-    }
-
-    /* ---------- CARD ---------- */
+    /* Card */
     .card {
-        @apply bg-gray-900 rounded-xl shadow-lg border border-gray-800;
+        @apply bg-background-card border border-gray-800 rounded-lg p-6
+               hover:border-gray-700 transition-colors duration-200;
     }
 
-    /* ---------- BADGE ---------- */
+    /* Card Elevated */
+    .card-elevated {
+        @apply bg-background-elevated border border-gray-700 rounded-lg p-6
+               shadow-lg hover:shadow-xl transition-all duration-200;
+    }
+
+    /* Form Input */
+    .form-input {
+        @apply w-full px-4 py-3 rounded-lg
+               bg-gray-900 text-text-primary border border-gray-800
+               placeholder-gray-500
+               focus:ring-2 focus:ring-primary focus:border-primary focus:outline-none
+               transition-all duration-200
+               disabled:opacity-50 disabled:cursor-not-allowed;
+    }
+
+    /* Form Label */
+    .form-label {
+        @apply block text-sm font-semibold text-text-primary mb-2;
+    }
+
+    /* Form Error */
+    .form-error {
+        @apply text-sm text-semantic-error mt-1;
+    }
+
+    /* Alert Success */
+    .alert-success {
+        @apply bg-green-500/10 border border-green-500 text-green-400
+               px-4 py-3 rounded-lg;
+    }
+
+    /* Alert Error */
+    .alert-error {
+        @apply bg-red-500/10 border border-red-500 text-red-400
+               px-4 py-3 rounded-lg;
+    }
+
+    /* Alert Warning */
+    .alert-warning {
+        @apply bg-yellow-500/10 border border-yellow-500 text-yellow-400
+               px-4 py-3 rounded-lg;
+    }
+
+    /* Alert Info */
+    .alert-info {
+        @apply bg-blue-500/10 border border-blue-500 text-blue-400
+               px-4 py-3 rounded-lg;
+    }
+
+    /* Badge */
     .badge {
-        @apply inline-flex items-center px-2.5 py-0.5 rounded-full
-               text-xs font-medium;
+        @apply inline-flex items-center px-3 py-1 text-xs font-semibold rounded-full;
     }
 
     .badge-primary {
-        @apply bg-[#FF8FC7]/20 text-[#FF8FC7];
+        @apply badge bg-primary/20 text-primary;
     }
 
     .badge-success {
-        @apply bg-green-500/20 text-green-400;
+        @apply badge bg-green-500/20 text-green-400;
+    }
+
+    .badge-error {
+        @apply badge bg-red-500/20 text-red-400;
     }
 
     .badge-warning {
-        @apply bg-yellow-500/20 text-yellow-400;
+        @apply badge bg-yellow-500/20 text-yellow-400;
     }
 
-    .badge-danger {
-        @apply bg-red-500/20 text-red-400;
-    }
-
-    .badge-gray {
-        @apply bg-gray-700 text-gray-300;
-    }
-
-    /* ---------- LINKS ---------- */
+    /* Link */
     .link {
-        @apply text-[#FF8FC7] hover:underline;
+        @apply text-primary hover:text-primary-hover underline-offset-4 hover:underline
+               transition-colors duration-200
+               focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2;
     }
 
-    /* ---------- UTILITIES ---------- */
-    .bg-primary {
-        @apply bg-[#FF8FC7];
+    /* Divider */
+    .divider {
+        @apply border-t border-gray-800 my-6;
+    }
+}
+
+/* ========================================
+   CUSTOM UTILITIES
+   ======================================== */
+
+@layer utilities {
+    /* Hide scrollbar but keep functionality */
+    .scrollbar-hide {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
     }
 
-    .text-primary {
-        @apply text-[#FF8FC7];
+    .scrollbar-hide::-webkit-scrollbar {
+        display: none;
     }
 
-    .ring-primary {
-        @apply focus:ring-[#FF8FC7];
+    /* Gradient text */
+    .text-gradient {
+        @apply bg-gradient-to-r from-primary to-pink-400 bg-clip-text text-transparent;
+    }
+
+    /* Smooth shadow */
+    .shadow-smooth {
+        box-shadow: 0 10px 40px rgba(255, 143, 199, 0.1);
+    }
+
+    /* Animation */
+    .animate-fade-in {
+        animation: fadeIn 0.3s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+}
+
+/* ========================================
+   ALPINE.JS X-CLOAK
+   ======================================== */
+
+[x-cloak] {
+    display: none !important;
+}
+
+/* ========================================
+   PRINT STYLES
+   ======================================== */
+
+@media print {
+    nav, footer, .no-print {
+        display: none !important;
+    }
+
+    body {
+        @apply bg-white text-black;
+    }
+
+    .card {
+        @apply border-black;
     }
 }

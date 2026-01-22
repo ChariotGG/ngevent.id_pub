@@ -1,0 +1,11 @@
+/* Guest-specific styles (landing, auth pages) */
+/* Kebanyakan sudah di-handle Tailwind, ini untuk override jika perlu */
+
+.hero-gradient {
+    background: linear-gradient(135deg, #000000 0%, #1a1a1a 50%, #000000 100%);
+}
+
+.auth-form-container {
+    max-width: 450px;
+    margin: 0 auto;
+}
