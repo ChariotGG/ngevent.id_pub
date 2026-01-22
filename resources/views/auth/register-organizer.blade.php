@@ -80,7 +80,7 @@
             <div class="text-center">
                 <p class="text-gray-600">Hanya ingin membeli tiket?</p>
                 <a href="{{ route('register') }}" class="mt-2 inline-block text-blue-600 hover:text-blue-800 font-medium">
-                    ← Daftar sebagai User biasa
+                    ← Beli Tiket
                 </a>
             </div>
         </div>
